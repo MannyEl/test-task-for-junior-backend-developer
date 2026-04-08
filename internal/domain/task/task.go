@@ -8,6 +8,7 @@ const (
 	StatusNew        Status = "new"
 	StatusInProgress Status = "in_progress"
 	StatusDone       Status = "done"
+	StatusCanceled   Status = "canceled"
 )
 
 type Task struct {
@@ -21,7 +22,7 @@ type Task struct {
 
 func (s Status) Valid() bool {
 	switch s {
-	case StatusNew, StatusInProgress, StatusDone:
+	case StatusNew, StatusInProgress, StatusDone, StatusCanceled:
 		return true
 	default:
 		return false
