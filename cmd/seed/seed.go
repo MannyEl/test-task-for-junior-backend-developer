@@ -44,7 +44,7 @@ func main() {
 }
 
 func generateTasks(count int, task *postgrestask.Repository) error {
-	for i := 0; i < count-1; i++ {
+	for i := 0; i < count; i++ {
 		taskData := &taskdomain.Task{
 			Title:       titles[rand.IntN(len(titles))],
 			Description: descriptions[rand.IntN(len(descriptions))],
