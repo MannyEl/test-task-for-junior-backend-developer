@@ -16,7 +16,7 @@ const (
 	MonthlyDays RecurrenceType = "monthly_days"
 )
 
-type Schedule struct {
+type Recurrence struct {
 	ID              int            `json:"id"`
 	Title           string         `json:"title"`
 	Description     string         `json:"description"`

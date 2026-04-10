@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	scheduledomain "example.com/taskservice/internal/domain/schedule"
+	recurrencedomain "example.com/taskservice/internal/domain/recurrence"
 	taskdomain "example.com/taskservice/internal/domain/task"
 )
 
@@ -22,6 +22,10 @@ func NewService(repo Repository) *Service {
 	}
 }
 
+func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceInput) (*recurrencedomain.Recurrence, error) {
+	return nil, nil
+}
+
 func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Task, error) {
 	normalized, err := validateCreateInput(input)
 	if err != nil {
@@ -33,29 +37,11 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Ta
 		Description: normalized.Description,
 		Status:      normalized.Status,
 	}
-	// заполняем шаблон на основе которого будут создаваться задачи
-	schedule := &scheduledomain.Schedule{
-		Title:         normalized.Title,
-		Description:   normalized.Description,
-		StartDate:     input.Recurrence.StartDate,
-		EndDate:       input.Recurrence.EndDate,
-		IntervalDays:  input.Recurrence.IntervalDays,
-		MonthDays:     input.Recurrence.MonthDays,
-		SpecificDates: input.Recurrence.SpecificDates,
-		EvenOdd:       input.Recurrence.EvenOdd,
-	}
 
 	now := s.now()
 	model.CreatedAt = now
 	model.UpdatedAt = now
-	schedule.CreatedAt = now
-	schedule.UpdatedAt = now
 
-	createdSchedule, err := s.repo.CreateSchedule(ctx, schedule)
-	if err != nil {
-		return nil, err
-	}
-	model.RuleID = createdSchedule.ID
 	created, err := s.repo.Create(ctx, model)
 	if err != nil {
 		return nil, err

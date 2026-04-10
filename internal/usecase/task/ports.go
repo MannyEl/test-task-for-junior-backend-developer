@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	scheduledomain "example.com/taskservice/internal/domain/schedule"
+	recurrencedomain "example.com/taskservice/internal/domain/recurrence"
 	taskdomain "example.com/taskservice/internal/domain/task"
 )
 
 type Repository interface {
 	Create(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error)
-	CreateSchedule(ctx context.Context, task *scheduledomain.Schedule) (*scheduledomain.Schedule, error)
+	CreateRecurrence(ctx context.Context, task *recurrencedomain.Recurrence) (*recurrencedomain.Recurrence, error)
 	GetByID(ctx context.Context, id int64) (*taskdomain.Task, error)
 	Update(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error)
 	Delete(ctx context.Context, id int64) error
@@ -19,6 +19,7 @@ type Repository interface {
 
 type Usecase interface {
 	Create(ctx context.Context, input CreateInput) (*taskdomain.Task, error)
+	CreateRecurrence(ctx context.Context, input CreateRecurrenceInput) (*recurrencedomain.Recurrence, error)
 	GetByID(ctx context.Context, id int64) (*taskdomain.Task, error)
 	Update(ctx context.Context, id int64, input UpdateInput) (*taskdomain.Task, error)
 	Delete(ctx context.Context, id int64) error
@@ -31,14 +32,20 @@ type Recurrence struct {
 	IntervalDays  int
 	MonthDays     []int
 	SpecificDates []time.Time
-	EvenOdd       scheduledomain.EvenOdd
+	EvenOdd       recurrencedomain.EvenOdd
+}
+
+type CreateRecurrenceInput struct {
+	Title       string
+	Description string
+	Status      taskdomain.Status
+	Recurrence  *Recurrence
 }
 
 type CreateInput struct {
 	Title       string
 	Description string
 	Status      taskdomain.Status
-	Recurrence  Recurrence
 }
 
 type UpdateInput struct {

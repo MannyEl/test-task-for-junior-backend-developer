@@ -25,28 +25,39 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	// TODO: Валидировать, + не заполнять если задача одноразовая
-	// добавляем в передачу шаблон на основе которого будут генерироваться задачи по заданным критериям
-	created, err := h.usecase.Create(r.Context(), taskusecase.CreateInput{
+
+	if req.Recurrence != nil {
+		recurrence := taskusecase.CreateRecurrenceInput{
+			Title:       req.Title,
+			Description: req.Description,
+			Status:      req.Status,
+			Recurrence: &taskusecase.Recurrence{
+				StartDate:     req.Recurrence.StartDate,
+				EndDate:       req.Recurrence.EndDate,
+				IntervalDays:  req.Recurrence.IntervalDays,
+				MonthDays:     req.Recurrence.MonthDays,
+				SpecificDates: req.Recurrence.SpecificDates,
+				EvenOdd:       req.Recurrence.EvenOdd,
+			},
+		}
+		created, err := h.usecase.CreateRecurrence(r.Context(), recurrence)
+		writeJSON(w, http.StatusCreated, newReccurenceDTO(created))
+		if err != nil {
+			writeUsecaseError(w, err)
+			return
+		}
+	}
+	task := taskusecase.CreateInput{
 		Title:       req.Title,
 		Description: req.Description,
 		Status:      req.Status,
-		Recurrence: taskusecase.Recurrence{
-			StartDate:     req.Recurrence.StartDate,
-			EndDate:       req.Recurrence.EndDate,
-			IntervalDays:  req.Recurrence.IntervalDays,
-			MonthDays:     req.Recurrence.MonthDays,
-			SpecificDates: req.Recurrence.SpecificDates,
-			EvenOdd:       req.Recurrence.EvenOdd,
-		},
-	})
-
+	}
+	created, err := h.usecase.Create(r.Context(), task)
+	writeJSON(w, http.StatusCreated, newTaskDTO(created))
 	if err != nil {
 		writeUsecaseError(w, err)
 		return
 	}
-
-	writeJSON(w, http.StatusCreated, newTaskDTO(created))
 }
 
 func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
