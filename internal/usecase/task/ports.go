@@ -38,7 +38,6 @@ type Recurrence struct {
 type CreateRecurrenceInput struct {
 	Title       string
 	Description string
-	Status      taskdomain.Status
 	Recurrence  *Recurrence
 }
 

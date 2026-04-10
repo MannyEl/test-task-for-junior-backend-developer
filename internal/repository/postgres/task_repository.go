@@ -19,19 +19,18 @@ func New(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-func (r *Repository) CreateRecurrence(ctx context.Context, schedule *recurrencedomain.Recurrence) (*recurrencedomain.Recurrence, error) {
+func (r *Repository) CreateRecurrence(ctx context.Context, recurrence *recurrencedomain.Recurrence) (*recurrencedomain.Recurrence, error) {
 	const query = `
 		INSERT INTO task_generation_rules (title, description, start_date, end_date, interval_days, month_days, specific_dates, even_odd, created_at, updated_at, last_generated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id
 	`
-	// TODO: add scan func
-	err := r.pool.QueryRow(ctx, query, schedule.Title, schedule.Description, schedule.StartDate, schedule.EndDate, schedule.IntervalDays, schedule.MonthDays, schedule.SpecificDates, schedule.EvenOdd, schedule.CreatedAt, schedule.UpdatedAt, schedule.LastGeneratedAt).Scan(&schedule.ID)
+	err := r.pool.QueryRow(ctx, query, recurrence.Title, recurrence.Description, recurrence.StartDate, recurrence.EndDate, recurrence.IntervalDays, recurrence.MonthDays, recurrence.SpecificDates, recurrence.EvenOdd, recurrence.CreatedAt, recurrence.UpdatedAt, recurrence.LastGeneratedAt).Scan(&recurrence.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return schedule, nil
+	return recurrence, nil
 }
 
 func (r *Repository) Create(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error) {

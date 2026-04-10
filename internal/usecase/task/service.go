@@ -23,7 +23,26 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceInput) (*recurrencedomain.Recurrence, error) {
-	return nil, nil
+	now := s.now()
+	model := &recurrencedomain.Recurrence{
+		Title:         input.Title,
+		Description:   input.Description,
+		StartDate:     input.Recurrence.StartDate,
+		EndDate:       input.Recurrence.EndDate,
+		IntervalDays:  input.Recurrence.IntervalDays,
+		MonthDays:     input.Recurrence.MonthDays,
+		SpecificDates: input.Recurrence.SpecificDates,
+		EvenOdd:       input.Recurrence.EvenOdd,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	created, err := s.repo.CreateRecurrence(ctx, model)
+	if err != nil {
+		return nil, err
+	}
+
+	return created, nil
 }
 
 func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Task, error) {

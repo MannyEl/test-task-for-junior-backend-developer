@@ -30,7 +30,6 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		recurrence := taskusecase.CreateRecurrenceInput{
 			Title:       req.Title,
 			Description: req.Description,
-			Status:      req.Status,
 			Recurrence: &taskusecase.Recurrence{
 				StartDate:     req.Recurrence.StartDate,
 				EndDate:       req.Recurrence.EndDate,
