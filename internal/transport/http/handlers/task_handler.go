@@ -47,11 +47,10 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if req.Recurrence == nil {
-
 		task := taskusecase.CreateInput{
 			Title:       req.Title,
 			Description: req.Description,
-			DueDate:     req.DueDate,
+			DueDate:     *req.DueDate,
 			Status:      req.Status,
 		}
 		created, err := h.usecase.Create(r.Context(), task)

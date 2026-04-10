@@ -27,12 +27,12 @@ type Usecase interface {
 }
 
 type Recurrence struct {
-	StartDate     time.Time
-	EndDate       time.Time
-	IntervalDays  int
-	MonthDays     []int
-	SpecificDates []time.Time
-	EvenOdd       recurrencedomain.EvenOdd
+	StartDate     *time.Time
+	EndDate       *time.Time
+	IntervalDays  *int
+	MonthDays     *[]int
+	SpecificDates *[]time.Time
+	EvenOdd       *recurrencedomain.EvenOdd
 }
 
 type CreateRecurrenceInput struct {

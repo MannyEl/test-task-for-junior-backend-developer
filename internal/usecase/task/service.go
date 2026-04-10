@@ -55,7 +55,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Ta
 		Title:       normalized.Title,
 		Description: normalized.Description,
 		Status:      normalized.Status,
-		DueDate:     normalized.DueDate,
+		DueDate:     &normalized.DueDate,
 	}
 
 	now := s.now()
