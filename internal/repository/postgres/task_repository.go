@@ -35,12 +35,12 @@ func (r *Repository) CreateRecurrence(ctx context.Context, recurrence *recurrenc
 
 func (r *Repository) Create(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error) {
 	const query = `
-		INSERT INTO tasks (title, description, status, created_at, updated_at, rule_id)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO tasks (title, description, due_date, status, created_at, updated_at, rule_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id, title, description, status, created_at, updated_at
 	`
 
-	row := r.pool.QueryRow(ctx, query, task.Title, task.Description, task.Status, task.CreatedAt, task.UpdatedAt, task.RuleID)
+	row := r.pool.QueryRow(ctx, query, task.Title, task.Description, task.DueDate, task.Status, task.CreatedAt, task.UpdatedAt, task.RuleID)
 	created, err := scanTask(row)
 	if err != nil {
 		return nil, err

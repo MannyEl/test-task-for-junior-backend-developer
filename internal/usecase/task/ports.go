@@ -44,11 +44,13 @@ type CreateRecurrenceInput struct {
 type CreateInput struct {
 	Title       string
 	Description string
+	DueDate     time.Time
 	Status      taskdomain.Status
 }
 
 type UpdateInput struct {
 	Title       string
 	Description string
+	DueDate     time.Time
 	Status      taskdomain.Status
 }

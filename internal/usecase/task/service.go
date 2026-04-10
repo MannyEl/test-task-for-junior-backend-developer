@@ -55,6 +55,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Ta
 		Title:       normalized.Title,
 		Description: normalized.Description,
 		Status:      normalized.Status,
+		DueDate:     normalized.DueDate,
 	}
 
 	now := s.now()
@@ -86,7 +87,6 @@ func (s *Service) Update(ctx context.Context, id int64, input UpdateInput) (*tas
 	if err != nil {
 		return nil, err
 	}
-
 	model := &taskdomain.Task{
 		ID:          id,
 		Title:       normalized.Title,

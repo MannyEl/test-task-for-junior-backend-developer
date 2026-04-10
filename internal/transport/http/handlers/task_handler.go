@@ -46,16 +46,20 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	task := taskusecase.CreateInput{
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      req.Status,
-	}
-	created, err := h.usecase.Create(r.Context(), task)
-	writeJSON(w, http.StatusCreated, newTaskDTO(created))
-	if err != nil {
-		writeUsecaseError(w, err)
-		return
+	if req.Recurrence == nil {
+
+		task := taskusecase.CreateInput{
+			Title:       req.Title,
+			Description: req.Description,
+			DueDate:     req.DueDate,
+			Status:      req.Status,
+		}
+		created, err := h.usecase.Create(r.Context(), task)
+		if err != nil {
+			writeUsecaseError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusCreated, newTaskDTO(created))
 	}
 }
 
