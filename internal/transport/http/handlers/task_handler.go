@@ -19,6 +19,21 @@ func NewTaskHandler(usecase taskusecase.Usecase) *TaskHandler {
 	return &TaskHandler{usecase: usecase}
 }
 
+func (h *TaskHandler) ListRecurrence(w http.ResponseWriter, r *http.Request) {
+	recurrences, err := h.usecase.ListRecurrence(r.Context())
+	if err != nil {
+		writeUsecaseError(w, err)
+		return
+	}
+
+	response := make([]recurrenceDTO, 0, len(recurrences))
+	for i := range recurrences {
+		response = append(response, newReccurenceDTO(&recurrences[i]))
+	}
+
+	writeJSON(w, http.StatusOK, response)
+}
+
 func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req taskMutationDTO
 	if err := decodeJSON(r, &req); err != nil {

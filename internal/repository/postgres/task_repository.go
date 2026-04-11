@@ -35,7 +35,7 @@ func (r *Repository) CreateRecurrence(ctx context.Context, recurrence *recurrenc
 
 func (r *Repository) ListRecurrence(ctx context.Context) ([]recurrencedomain.Recurrence, error) {
 	const query = `
-		SELECT * FROM task_generation_rules
+		SELECT id, title, description, start_date, end_date, interval_days, specific_dates, month_days, even_odd, created_at, updated_at FROM task_generation_rules
 	`
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
@@ -56,7 +56,6 @@ func (r *Repository) ListRecurrence(ctx context.Context) ([]recurrencedomain.Rec
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
 	return recurrences, nil
 }
 
@@ -203,9 +202,9 @@ func scanRecurrence(scanner sccanner) (*recurrencedomain.Recurrence, error) {
 		&recurrence.StartDate,
 		&recurrence.EndDate,
 		&recurrence.IntervalDays,
+		&recurrence.SpecificDates,
 		&recurrence.MonthDays,
 		&recurrence.EvenOdd,
-		&recurrence.SpecificDates,
 		&recurrence.CreatedAt,
 		&recurrence.UpdatedAt,
 	); err != nil {
