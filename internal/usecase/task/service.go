@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	recurrencedomain "example.com/taskservice/internal/domain/recurrence"
 	taskdomain "example.com/taskservice/internal/domain/task"
 )
 
@@ -21,6 +22,29 @@ func NewService(repo Repository) *Service {
 	}
 }
 
+func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceInput) (*recurrencedomain.Recurrence, error) {
+	now := s.now()
+	model := &recurrencedomain.Recurrence{
+		Title:         input.Title,
+		Description:   input.Description,
+		StartDate:     input.Recurrence.StartDate,
+		EndDate:       input.Recurrence.EndDate,
+		IntervalDays:  input.Recurrence.IntervalDays,
+		MonthDays:     input.Recurrence.MonthDays,
+		SpecificDates: input.Recurrence.SpecificDates,
+		EvenOdd:       input.Recurrence.EvenOdd,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	created, err := s.repo.CreateRecurrence(ctx, model)
+	if err != nil {
+		return nil, err
+	}
+
+	return created, nil
+}
+
 func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Task, error) {
 	normalized, err := validateCreateInput(input)
 	if err != nil {
@@ -31,7 +55,9 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Ta
 		Title:       normalized.Title,
 		Description: normalized.Description,
 		Status:      normalized.Status,
+		DueDate:     &normalized.DueDate,
 	}
+
 	now := s.now()
 	model.CreatedAt = now
 	model.UpdatedAt = now
@@ -61,7 +87,6 @@ func (s *Service) Update(ctx context.Context, id int64, input UpdateInput) (*tas
 	if err != nil {
 		return nil, err
 	}
-
 	model := &taskdomain.Task{
 		ID:          id,
 		Title:       normalized.Title,

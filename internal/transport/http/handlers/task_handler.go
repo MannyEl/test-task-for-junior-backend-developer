@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -27,17 +26,40 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	created, err := h.usecase.Create(r.Context(), taskusecase.CreateInput{
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      req.Status,
-	})
-	if err != nil {
-		writeUsecaseError(w, err)
-		return
+	if req.Recurrence != nil {
+		recurrence := taskusecase.CreateRecurrenceInput{
+			Title:       req.Title,
+			Description: req.Description,
+			Recurrence: &taskusecase.Recurrence{
+				StartDate:     req.Recurrence.StartDate,
+				EndDate:       req.Recurrence.EndDate,
+				IntervalDays:  req.Recurrence.IntervalDays,
+				MonthDays:     req.Recurrence.MonthDays,
+				SpecificDates: req.Recurrence.SpecificDates,
+				EvenOdd:       req.Recurrence.EvenOdd,
+			},
+		}
+		created, err := h.usecase.CreateRecurrence(r.Context(), recurrence)
+		writeJSON(w, http.StatusCreated, newReccurenceDTO(created))
+		if err != nil {
+			writeUsecaseError(w, err)
+			return
+		}
 	}
-
-	writeJSON(w, http.StatusCreated, newTaskDTO(created))
+	if req.Recurrence == nil {
+		task := taskusecase.CreateInput{
+			Title:       req.Title,
+			Description: req.Description,
+			DueDate:     *req.DueDate,
+			Status:      req.Status,
+		}
+		created, err := h.usecase.Create(r.Context(), task)
+		if err != nil {
+			writeUsecaseError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusCreated, newTaskDTO(created))
+	}
 }
 
 func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -130,17 +152,6 @@ func getIDFromRequest(r *http.Request) (int64, error) {
 	return id, nil
 }
 
-func decodeJSON(r *http.Request, dst any) error {
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-
-	if err := decoder.Decode(dst); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func writeUsecaseError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, taskdomain.ErrNotFound):
@@ -150,17 +161,4 @@ func writeUsecaseError(w http.ResponseWriter, err error) {
 	default:
 		writeError(w, http.StatusInternalServerError, err)
 	}
-}
-
-func writeError(w http.ResponseWriter, status int, err error) {
-	writeJSON(w, status, map[string]string{
-		"error": err.Error(),
-	})
-}
-
-func writeJSON(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-
-	_ = json.NewEncoder(w).Encode(payload)
 }

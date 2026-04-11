@@ -1,3 +1,5 @@
 .ruby-lsp
 .envrc
 .env
+.air.toml
+bin

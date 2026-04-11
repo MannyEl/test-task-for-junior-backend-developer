@@ -8,11 +8,14 @@ import (
 	"time"
 
 	"example.com/taskservice/internal/config"
+	recurrencedomain "example.com/taskservice/internal/domain/recurrence"
 	"example.com/taskservice/internal/domain/task"
 	taskdomain "example.com/taskservice/internal/domain/task"
 	postgresinfra "example.com/taskservice/internal/infrastructure/postgres"
 	postgrestask "example.com/taskservice/internal/repository/postgres"
 )
+
+// Gen Tasks
 
 var titles = []string{
 	"Провести утренний обход пациентов", "Заполнить истории болезни", "Назначить лабораторные анализы", "Проверить жизненные показатели", "Выписать рецепты на лекарства", "Провести вакцинацию детей", "Обновить карты диспансерного наблюдения", "Подготовить пациентов к операции", "Провести ЭКГ исследование", "Выдать больничные листы", "Проверить срок годности медикаментов", "Провести перевязку послеоперационных ран", "Собрать анамнез у новых пациентов", "Направить на инструментальную диагностику", "Провести санитарную обработку палат", "Проверить результаты МРТ", "Провести реанимационные мероприятия", "Оформить эпикризы по выписке", "Провести забор крови на анализ", "Заполнить журнал учёта процедур",
@@ -26,6 +29,93 @@ var statuses = []task.Status{
 	"new", "in_progress", "done", "new", "in_progress", "done", "canceled", "new", "in_progress", "done", "new", "in_progress", "done", "canceled", "new", "in_progress", "done", "new", "in_progress", "done",
 }
 
+var evenOdd = []recurrencedomain.EvenOdd{
+	"even", "odd",
+}
+
+func generateTasks(count int) ([]taskdomain.Task, error) {
+	var tasks []taskdomain.Task
+	for i := 0; i < count; i++ {
+		var dueDate *time.Time
+		if rand.IntN(10) > 3 {
+			date := time.Now().Add(time.Hour * 24 * time.Duration(rand.IntN(30)))
+			dueDate = &date
+		}
+		createdAt := time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10)))
+		taskData := taskdomain.Task{
+			Title:       titles[rand.IntN(len(titles))],
+			Description: descriptions[rand.IntN(len(descriptions))],
+			DueDate:     dueDate,
+			Status:      statuses[rand.IntN(len(statuses))],
+			CreatedAt:   createdAt,
+			UpdatedAt:   createdAt.Add(time.Hour * 24 * time.Duration(rand.IntN(10))),
+		}
+		tasks = append(tasks, taskData)
+	}
+	return tasks, nil
+}
+
+// Gen Recurrence
+
+func fillInterval(recurrence *recurrencedomain.Recurrence) {
+	intervalDays := rand.IntN(10)
+	recurrence.IntervalDays = &intervalDays
+}
+
+func fillMonthDays(recurrence *recurrencedomain.Recurrence) {
+	var monthDays []int
+	for i := 0; i < (rand.IntN(10)); i++ {
+		monthDays = append(monthDays, rand.IntN(29)+1)
+	}
+	recurrence.MonthDays = &monthDays
+}
+
+func fillSpecificDates(recurrence *recurrencedomain.Recurrence) {
+	var specificDates []time.Time
+	for i := 0; i < (rand.IntN(10)); i++ {
+		specificDates = append(specificDates, time.Now().Add(time.Hour*24*time.Duration(rand.IntN(10))))
+	}
+	recurrence.SpecificDates = &specificDates
+}
+
+func fillEvenOdd(recurrence *recurrencedomain.Recurrence) {
+	recurrence.EvenOdd = &evenOdd[rand.IntN(2)]
+}
+
+func generateRecurrences(count int) ([]recurrencedomain.Recurrence, error) {
+	var recurrences []recurrencedomain.Recurrence
+	for i := 0; i < count; i++ {
+		createdAt := time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10)))
+		startDate := time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10)))
+		endDate := time.Now().Add(time.Hour * 24 * time.Duration(rand.IntN(10)))
+
+		recurrenceData := recurrencedomain.Recurrence{
+			Title:       titles[rand.IntN(len(titles))],
+			Description: descriptions[rand.IntN(len(descriptions))],
+			CreatedAt:   createdAt,
+			UpdatedAt:   createdAt.Add(time.Hour * 24 * time.Duration(rand.IntN(10))),
+			StartDate:   &startDate,
+			EndDate:     &endDate,
+		}
+		// TODO: Изменить на текстовый вариант
+		recurrenceType := rand.IntN(4)
+
+		switch recurrenceType {
+		case 0:
+			fillInterval(&recurrenceData)
+		case 1:
+			fillMonthDays(&recurrenceData)
+		case 2:
+			fillSpecificDates(&recurrenceData)
+		case 3:
+			fillEvenOdd(&recurrenceData)
+		}
+
+		recurrences = append(recurrences, recurrenceData)
+	}
+	return recurrences, nil
+}
+
 func main() {
 	dsn := config.LoadConfig().DatabaseDSN
 	pool, err := postgresinfra.Open(context.Background(), dsn)
@@ -33,29 +123,34 @@ func main() {
 		log.Fatal(err)
 	}
 
-	task := postgrestask.New(pool)
+	repo := postgrestask.New(pool)
 
-	err = generateTasks(20, task)
-
+	// fill tasks db
+	tasks, err := generateTasks(20)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Данные заполнены")
-}
 
-func generateTasks(count int, task *postgrestask.Repository) error {
-	for i := 0; i < count; i++ {
-		taskData := &taskdomain.Task{
-			Title:       titles[rand.IntN(len(titles))],
-			Description: descriptions[rand.IntN(len(descriptions))],
-			Status:      statuses[rand.IntN(len(statuses))],
-			CreatedAt:   time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10))),
-			UpdatedAt:   time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10))),
-		}
-		_, err := task.Create(context.Background(), taskData)
+	for _, val := range tasks {
+		_, err := repo.Create(context.Background(), &val)
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
 	}
-	return nil
+	fmt.Println("Созданы 20 разовых задач")
+
+	// fill recurrences db
+
+	recurrences, err := generateRecurrences(20)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, val := range recurrences {
+		_, err := repo.CreateRecurrence(context.Background(), &val)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	fmt.Println("Созданы 20 повторяющихся задач")
 }
