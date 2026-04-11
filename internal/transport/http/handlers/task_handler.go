@@ -154,6 +154,8 @@ func getIDFromRequest(r *http.Request) (int64, error) {
 
 func writeUsecaseError(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, taskusecase.ErrInvalidRecurrenceInput):
+		writeError(w, http.StatusBadRequest, err)
 	case errors.Is(err, taskdomain.ErrNotFound):
 		writeError(w, http.StatusNotFound, err)
 	case errors.Is(err, taskusecase.ErrInvalidInput):

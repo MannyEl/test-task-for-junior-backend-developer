@@ -23,16 +23,20 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceInput) (*recurrencedomain.Recurrence, error) {
+	normalized, err := validateRecurrenceInput(input)
+	if err != nil {
+		return nil, err
+	}
 	now := s.now()
 	model := &recurrencedomain.Recurrence{
-		Title:         input.Title,
-		Description:   input.Description,
-		StartDate:     input.Recurrence.StartDate,
-		EndDate:       input.Recurrence.EndDate,
-		IntervalDays:  input.Recurrence.IntervalDays,
-		MonthDays:     input.Recurrence.MonthDays,
-		SpecificDates: input.Recurrence.SpecificDates,
-		EvenOdd:       input.Recurrence.EvenOdd,
+		Title:         normalized.Title,
+		Description:   normalized.Description,
+		StartDate:     normalized.Recurrence.StartDate,
+		EndDate:       normalized.Recurrence.EndDate,
+		IntervalDays:  normalized.Recurrence.IntervalDays,
+		MonthDays:     normalized.Recurrence.MonthDays,
+		SpecificDates: normalized.Recurrence.SpecificDates,
+		EvenOdd:       normalized.Recurrence.EvenOdd,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
@@ -144,6 +148,48 @@ func validateUpdateInput(input UpdateInput) (UpdateInput, error) {
 
 	if !input.Status.Valid() {
 		return UpdateInput{}, fmt.Errorf("%w: invalid status", ErrInvalidInput)
+	}
+
+	return input, nil
+}
+
+func validateRecurrenceInput(input CreateRecurrenceInput) (CreateRecurrenceInput, error) {
+	input.Title = strings.TrimSpace(input.Title)
+	input.Description = strings.TrimSpace(input.Description)
+
+	if input.Title == "" {
+		return CreateRecurrenceInput{}, fmt.Errorf("%w: title is required", ErrInvalidInput)
+	}
+
+	if input.Recurrence.StartDate == nil {
+		t := time.Now()
+		input.Recurrence.StartDate = &t
+	}
+
+	if input.Recurrence.EndDate.Before(*input.Recurrence.StartDate) {
+		return CreateRecurrenceInput{}, fmt.Errorf("%w: end_date can't be before start_date", ErrInvalidInput)
+	}
+	notNilCount := 0
+
+	if input.Recurrence.IntervalDays != nil {
+		notNilCount++
+	}
+	if input.Recurrence.MonthDays != nil {
+		notNilCount++
+	}
+	if input.Recurrence.SpecificDates != nil {
+		notNilCount++
+	}
+	if input.Recurrence.EvenOdd != nil {
+		notNilCount++
+	}
+
+	if notNilCount == 0 {
+		return CreateRecurrenceInput{}, fmt.Errorf("%w: one of recurrence should be specified (interval_days, month_days, specific_dates, even_odd)", ErrInvalidInput)
+	}
+
+	if notNilCount > 1 {
+		return CreateRecurrenceInput{}, fmt.Errorf("%w: only one recurrence type can be specified, got %d", ErrInvalidRecurrenceInput, notNilCount)
 	}
 
 	return input, nil
