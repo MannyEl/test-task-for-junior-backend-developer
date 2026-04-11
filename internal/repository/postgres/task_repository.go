@@ -33,6 +33,33 @@ func (r *Repository) CreateRecurrence(ctx context.Context, recurrence *recurrenc
 	return recurrence, nil
 }
 
+func (r *Repository) ListRecurrence(ctx context.Context) ([]recurrencedomain.Recurrence, error) {
+	const query = `
+		SELECT * FROM task_generation_rules
+	`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	recurrences := make([]recurrencedomain.Recurrence, 0)
+	for rows.Next() {
+		recurrence, err := scanRecurrence(rows)
+		if err != nil {
+			return nil, err
+		}
+
+		recurrences = append(recurrences, *recurrence)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return recurrences, nil
+}
+
 func (r *Repository) Create(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error) {
 	const query = `
 		INSERT INTO tasks (title, description, due_date, status, created_at, updated_at, rule_id)
@@ -138,11 +165,11 @@ func (r *Repository) List(ctx context.Context) ([]taskdomain.Task, error) {
 	return tasks, nil
 }
 
-type taskScanner interface {
+type sccanner interface {
 	Scan(dest ...any) error
 }
 
-func scanTask(scanner taskScanner) (*taskdomain.Task, error) {
+func scanTask(scanner sccanner) (*taskdomain.Task, error) {
 	var (
 		task   taskdomain.Task
 		status string
@@ -162,4 +189,28 @@ func scanTask(scanner taskScanner) (*taskdomain.Task, error) {
 	task.Status = taskdomain.Status(status)
 
 	return &task, nil
+}
+
+func scanRecurrence(scanner sccanner) (*recurrencedomain.Recurrence, error) {
+	var (
+		recurrence recurrencedomain.Recurrence
+	)
+
+	if err := scanner.Scan(
+		&recurrence.ID,
+		&recurrence.Title,
+		&recurrence.Description,
+		&recurrence.StartDate,
+		&recurrence.EndDate,
+		&recurrence.IntervalDays,
+		&recurrence.MonthDays,
+		&recurrence.EvenOdd,
+		&recurrence.SpecificDates,
+		&recurrence.CreatedAt,
+		&recurrence.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+
+	return &recurrence, nil
 }

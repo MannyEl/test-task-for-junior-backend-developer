@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error)
 	CreateRecurrence(ctx context.Context, task *recurrencedomain.Recurrence) (*recurrencedomain.Recurrence, error)
+	ListRecurrence(ctx context.Context) ([]recurrencedomain.Recurrence, error)
 	GetByID(ctx context.Context, id int64) (*taskdomain.Task, error)
 	Update(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error)
 	Delete(ctx context.Context, id int64) error
@@ -20,6 +21,7 @@ type Repository interface {
 type Usecase interface {
 	Create(ctx context.Context, input CreateInput) (*taskdomain.Task, error)
 	CreateRecurrence(ctx context.Context, input CreateRecurrenceInput) (*recurrencedomain.Recurrence, error)
+	ListRecurrence(ctx context.Context) ([]recurrencedomain.Recurrence, error)
 	GetByID(ctx context.Context, id int64) (*taskdomain.Task, error)
 	Update(ctx context.Context, id int64, input UpdateInput) (*taskdomain.Task, error)
 	Delete(ctx context.Context, id int64) error

@@ -22,6 +22,12 @@ func NewService(repo Repository) *Service {
 	}
 }
 
+// Recurrences
+
+func (s *Service) CreateRecurrencedTasks(ctx context.Context, from time.Time, to time.Time) {
+
+}
+
 func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceInput) (*recurrencedomain.Recurrence, error) {
 	normalized, err := validateRecurrenceInput(input)
 	if err != nil {
@@ -48,6 +54,12 @@ func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceIn
 
 	return created, nil
 }
+
+func (s *Service) ListRecurrence(ctx context.Context) ([]recurrencedomain.Recurrence, error) {
+	return s.repo.ListRecurrence(ctx)
+}
+
+// Tasks
 
 func (s *Service) Create(ctx context.Context, input CreateInput) (*taskdomain.Task, error) {
 	normalized, err := validateCreateInput(input)
