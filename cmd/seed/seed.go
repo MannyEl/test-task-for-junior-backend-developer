@@ -57,33 +57,60 @@ func generateTasks(count int) ([]taskdomain.Task, error) {
 
 // Gen Recurrence
 
+func fillInterval(recurrence *recurrencedomain.Recurrence) {
+	intervalDays := rand.IntN(10)
+	recurrence.IntervalDays = &intervalDays
+}
+
+func fillMonthDays(recurrence *recurrencedomain.Recurrence) {
+	var monthDays []int
+	for i := 0; i < (rand.IntN(10)); i++ {
+		monthDays = append(monthDays, rand.IntN(29)+1)
+	}
+	recurrence.MonthDays = &monthDays
+}
+
+func fillSpecificDates(recurrence *recurrencedomain.Recurrence) {
+	var specificDates []time.Time
+	for i := 0; i < (rand.IntN(10)); i++ {
+		specificDates = append(specificDates, time.Now().Add(time.Hour*24*time.Duration(rand.IntN(10))))
+	}
+	recurrence.SpecificDates = &specificDates
+}
+
+func fillEvenOdd(recurrence *recurrencedomain.Recurrence) {
+	recurrence.EvenOdd = &evenOdd[rand.IntN(2)]
+}
+
 func generateRecurrences(count int) ([]recurrencedomain.Recurrence, error) {
 	var recurrences []recurrencedomain.Recurrence
 	for i := 0; i < count; i++ {
 		createdAt := time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10)))
 		startDate := time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10)))
 		endDate := time.Now().Add(time.Hour * 24 * time.Duration(rand.IntN(10)))
-		intervalDays := rand.IntN(10)
-		var monthDays []int
-		for i := 0; i < (rand.IntN(10)); i++ {
-			monthDays = append(monthDays, rand.IntN(29)+1)
-		}
-		var specificDates []time.Time
-		for i := 0; i < (rand.IntN(10)); i++ {
-			specificDates = append(specificDates, time.Now().Add(time.Hour*24*time.Duration(rand.IntN(10))))
-		}
+
 		recurrenceData := recurrencedomain.Recurrence{
-			Title:         titles[rand.IntN(len(titles))],
-			Description:   descriptions[rand.IntN(len(descriptions))],
-			CreatedAt:     createdAt,
-			UpdatedAt:     createdAt.Add(time.Hour * 24 * time.Duration(rand.IntN(10))),
-			StartDate:     &startDate,
-			EndDate:       &endDate,
-			IntervalDays:  &intervalDays,
-			MonthDays:     &monthDays,
-			SpecificDates: &specificDates,
-			EvenOdd:       &evenOdd[rand.IntN(2)],
+			Title:       titles[rand.IntN(len(titles))],
+			Description: descriptions[rand.IntN(len(descriptions))],
+			CreatedAt:   createdAt,
+			UpdatedAt:   createdAt.Add(time.Hour * 24 * time.Duration(rand.IntN(10))),
+			StartDate:   &startDate,
+			EndDate:     &endDate,
 		}
+		// TODO: Изменить на текстовый вариант
+		recurrenceType := rand.IntN(4)
+
+		switch recurrenceType {
+		case 0:
+			fillInterval(&recurrenceData)
+		case 1:
+			fillMonthDays(&recurrenceData)
+		case 2:
+			fillSpecificDates(&recurrenceData)
+		case 3:
+			fillEvenOdd(&recurrenceData)
+		}
+
 		recurrences = append(recurrences, recurrenceData)
 	}
 	return recurrences, nil
@@ -98,7 +125,7 @@ func main() {
 
 	repo := postgrestask.New(pool)
 
-	// tasks
+	// fill tasks db
 	tasks, err := generateTasks(20)
 	if err != nil {
 		log.Fatal(err)
@@ -112,9 +139,12 @@ func main() {
 	}
 	fmt.Println("Созданы 20 разовых задач")
 
-	// recurrences
+	// fill recurrences db
 
 	recurrences, err := generateRecurrences(20)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for _, val := range recurrences {
 		_, err := repo.CreateRecurrence(context.Background(), &val)
 		if err != nil {
@@ -122,8 +152,5 @@ func main() {
 		}
 	}
 
-	if err != nil {
-		log.Fatal(err)
-	}
 	fmt.Println("Созданы 20 повторяющихся задач")
 }
