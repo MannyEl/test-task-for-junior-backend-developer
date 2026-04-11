@@ -166,8 +166,10 @@ func validateRecurrenceInput(input CreateRecurrenceInput) (CreateRecurrenceInput
 		input.Recurrence.StartDate = &t
 	}
 
-	if input.Recurrence.EndDate.Before(*input.Recurrence.StartDate) {
-		return CreateRecurrenceInput{}, fmt.Errorf("%w: end_date can't be before start_date", ErrInvalidInput)
+	if input.Recurrence.EndDate != nil {
+		if input.Recurrence.EndDate.Before(*input.Recurrence.StartDate) {
+			return CreateRecurrenceInput{}, fmt.Errorf("%w: end_date can't be before start_date", ErrInvalidInput)
+		}
 	}
 	notNilCount := 0
 

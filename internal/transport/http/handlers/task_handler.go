@@ -40,11 +40,11 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 		created, err := h.usecase.CreateRecurrence(r.Context(), recurrence)
-		writeJSON(w, http.StatusCreated, newReccurenceDTO(created))
 		if err != nil {
 			writeUsecaseError(w, err)
 			return
 		}
+		writeJSON(w, http.StatusCreated, newReccurenceDTO(created))
 	}
 	if req.Recurrence == nil {
 		task := taskusecase.CreateInput{

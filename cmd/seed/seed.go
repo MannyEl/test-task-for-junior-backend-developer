@@ -87,7 +87,11 @@ func generateRecurrences(count int) ([]recurrencedomain.Recurrence, error) {
 	for i := 0; i < count; i++ {
 		createdAt := time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10)))
 		startDate := time.Now().Add(time.Hour * 24 * -time.Duration(rand.IntN(10)))
-		endDate := time.Now().Add(time.Hour * 24 * time.Duration(rand.IntN(10)))
+		var endDate *time.Time
+		if rand.IntN(3) == 0 {
+			t := time.Now().Add(time.Hour * 24 * time.Duration(rand.IntN(10)))
+			endDate = &t
+		}
 
 		recurrenceData := recurrencedomain.Recurrence{
 			Title:       titles[rand.IntN(len(titles))],
@@ -95,7 +99,7 @@ func generateRecurrences(count int) ([]recurrencedomain.Recurrence, error) {
 			CreatedAt:   createdAt,
 			UpdatedAt:   createdAt.Add(time.Hour * 24 * time.Duration(rand.IntN(10))),
 			StartDate:   &startDate,
-			EndDate:     &endDate,
+			EndDate:     endDate,
 		}
 		// TODO: Изменить на текстовый вариант
 		recurrenceType := rand.IntN(4)

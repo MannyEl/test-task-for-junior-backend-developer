@@ -21,11 +21,11 @@ func New(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) CreateRecurrence(ctx context.Context, recurrence *recurrencedomain.Recurrence) (*recurrencedomain.Recurrence, error) {
 	const query = `
-		INSERT INTO task_generation_rules (title, description, start_date, end_date, interval_days, month_days, specific_dates, even_odd, created_at, updated_at, last_generated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		INSERT INTO task_generation_rules (title, description, start_date, end_date, interval_days, month_days, specific_dates, even_odd, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id
 	`
-	err := r.pool.QueryRow(ctx, query, recurrence.Title, recurrence.Description, recurrence.StartDate, recurrence.EndDate, recurrence.IntervalDays, recurrence.MonthDays, recurrence.SpecificDates, recurrence.EvenOdd, recurrence.CreatedAt, recurrence.UpdatedAt, recurrence.LastGeneratedAt).Scan(&recurrence.ID)
+	err := r.pool.QueryRow(ctx, query, recurrence.Title, recurrence.Description, recurrence.StartDate, recurrence.EndDate, recurrence.IntervalDays, recurrence.MonthDays, recurrence.SpecificDates, recurrence.EvenOdd, recurrence.CreatedAt, recurrence.UpdatedAt).Scan(&recurrence.ID)
 	if err != nil {
 		return nil, err
 	}
