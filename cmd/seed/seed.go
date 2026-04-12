@@ -101,7 +101,6 @@ func generateRecurrences(count int) ([]recurrencedomain.Recurrence, error) {
 			StartDate:   &startDate,
 			EndDate:     endDate,
 		}
-		// TODO: Изменить на текстовый вариант
 		recurrenceType := rand.IntN(4)
 
 		switch recurrenceType {
