@@ -19,6 +19,7 @@ func NewRouter(taskHandler *httphandlers.TaskHandler, docsHandler *swaggerdocs.H
 	api := router.PathPrefix("/api/v1").Subrouter()
 
 	api.HandleFunc("/recurrences", taskHandler.ListRecurrence).Methods(http.MethodGet)
+	api.HandleFunc("/tasks/generate", taskHandler.CreateRecurrencedTasks).Methods(http.MethodPost)
 
 	api.HandleFunc("/tasks", taskHandler.Create).Methods(http.MethodPost)
 	api.HandleFunc("/tasks", taskHandler.List).Methods(http.MethodGet)

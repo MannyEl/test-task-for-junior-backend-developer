@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -19,6 +20,8 @@ func NewTaskHandler(usecase taskusecase.Usecase) *TaskHandler {
 	return &TaskHandler{usecase: usecase}
 }
 
+// Recurrence
+
 func (h *TaskHandler) ListRecurrence(w http.ResponseWriter, r *http.Request) {
 	recurrences, err := h.usecase.ListRecurrence(r.Context())
 	if err != nil {
@@ -33,6 +36,42 @@ func (h *TaskHandler) ListRecurrence(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, response)
 }
+
+func (h *TaskHandler) CreateRecurrencedTasks(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	fromStr := query.Get("from")
+	toStr := query.Get("to")
+
+	layout := "2006-01-02"
+
+	from, err := time.Parse(layout, fromStr)
+	if err != nil {
+		writeUsecaseError(w, errors.New("invalid 'from' format"))
+		return
+	}
+	to, err := time.Parse(layout, toStr)
+	if err != nil {
+		writeUsecaseError(w, errors.New("invalid 'to' format"))
+		return
+
+	}
+
+	if fromStr == "" || toStr == "" {
+		writeUsecaseError(w, errors.New("params 'from' and 'to' must be specified"))
+		return
+	}
+
+	err = h.usecase.CreateRecurrencedTasks(r.Context(), from, to)
+
+	if err != nil {
+		writeUsecaseError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, "ok")
+}
+
+// Tasks
 
 func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req taskMutationDTO

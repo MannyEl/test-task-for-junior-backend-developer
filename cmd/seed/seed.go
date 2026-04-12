@@ -58,14 +58,14 @@ func generateTasks(count int) ([]taskdomain.Task, error) {
 // Gen Recurrence
 
 func fillInterval(recurrence *recurrencedomain.Recurrence) {
-	intervalDays := rand.IntN(10)
+	intervalDays := rand.IntN(9) + 1
 	recurrence.IntervalDays = &intervalDays
 }
 
 func fillMonthDays(recurrence *recurrencedomain.Recurrence) {
 	var monthDays []int
 	for i := 0; i < (rand.IntN(10)); i++ {
-		monthDays = append(monthDays, rand.IntN(29)+1)
+		monthDays = append(monthDays, rand.IntN(30)+1)
 	}
 	recurrence.MonthDays = &monthDays
 }

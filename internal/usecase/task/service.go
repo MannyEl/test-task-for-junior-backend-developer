@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -24,35 +25,82 @@ func NewService(repo Repository) *Service {
 
 // Recurrences
 
-func (s *Service) CreateRecurrencedTasks(ctx context.Context, from time.Time, to time.Time) {
-
-}
-
 func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceInput) (*recurrencedomain.Recurrence, error) {
 	normalized, err := validateRecurrenceInput(input)
 	if err != nil {
 		return nil, err
 	}
 	now := s.now()
-	model := &recurrencedomain.Recurrence{
-		Title:         normalized.Title,
-		Description:   normalized.Description,
-		StartDate:     normalized.Recurrence.StartDate,
-		EndDate:       normalized.Recurrence.EndDate,
-		IntervalDays:  normalized.Recurrence.IntervalDays,
-		MonthDays:     normalized.Recurrence.MonthDays,
-		SpecificDates: normalized.Recurrence.SpecificDates,
-		EvenOdd:       normalized.Recurrence.EvenOdd,
-		CreatedAt:     now,
-		UpdatedAt:     now,
-	}
+	model := recurrencedomain.New(
+		normalized.Title,
+		normalized.Description,
+		normalized.Recurrence.StartDate,
+		normalized.Recurrence.EndDate,
+		normalized.Recurrence.IntervalDays,
+		normalized.Recurrence.MonthDays,
+		normalized.Recurrence.SpecificDates,
+		normalized.Recurrence.EvenOdd,
+	)
 
-	created, err := s.repo.CreateRecurrence(ctx, model)
+	model.CreatedAt = now
+	model.UpdatedAt = now
+
+	created, err := s.repo.CreateRecurrence(ctx, &model)
 	if err != nil {
 		return nil, err
 	}
 
 	return created, nil
+}
+
+func (s *Service) CreateRecurrencedTasks(ctx context.Context, from, to time.Time) error {
+	recurrences, err := s.repo.ListRecurrence(ctx)
+	if err != nil {
+		return fmt.Errorf("list recurrences: %w", err)
+	}
+
+	for _, rec := range recurrences {
+		if !rec.Active {
+			continue
+		}
+
+		if err := s.generateTasksForRule(ctx, rec, from, to); err != nil {
+			return fmt.Errorf("generate tasks for rule %d: %w", rec.ID, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) generateTasksForRule(ctx context.Context, rec recurrencedomain.Recurrence, from, to time.Time) error {
+	for day := from; day.Before(to); day = day.AddDate(0, 0, 1) {
+		if err := rec.Matches(day); err != nil {
+			if errors.Is(err, recurrencedomain.ErrDateNotMatched) || errors.Is(err, recurrencedomain.ErrDateOutOfRange) {
+				continue
+			}
+			return err
+		}
+
+		task := buildTask(rec, day, s.now())
+		if err := s.repo.CreateIfNotExists(ctx, task); err != nil {
+			return fmt.Errorf("create task for date %s: %w", day.Format("2006-01-02"), err)
+		}
+	}
+
+	return nil
+}
+
+func buildTask(rec recurrencedomain.Recurrence, scheduledFor time.Time, now time.Time) *taskdomain.Task {
+	day := scheduledFor.UTC().Truncate(24 * time.Hour)
+	return &taskdomain.Task{
+		RuleID:       &rec.ID,
+		Title:        rec.Title,
+		Description:  rec.Description,
+		Status:       taskdomain.StatusNew,
+		ScheduledFor: &day,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
 }
 
 func (s *Service) ListRecurrence(ctx context.Context) ([]recurrencedomain.Recurrence, error) {
