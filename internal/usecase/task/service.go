@@ -73,7 +73,7 @@ func (s *Service) CreateRecurrencedTasks(ctx context.Context, from, to time.Time
 }
 
 func (s *Service) generateTasksForRule(ctx context.Context, rec recurrencedomain.Recurrence, from, to time.Time) error {
-	for day := from; day.Before(to); day = day.AddDate(0, 0, 1) {
+	for day := from; !day.After(to); day = day.AddDate(0, 0, 1) {
 		if err := rec.Matches(day); err != nil {
 			if errors.Is(err, recurrencedomain.ErrDateNotMatched) || errors.Is(err, recurrencedomain.ErrDateOutOfRange) {
 				continue
@@ -252,6 +252,26 @@ func validateRecurrenceInput(input CreateRecurrenceInput) (CreateRecurrenceInput
 
 	if notNilCount > 1 {
 		return CreateRecurrenceInput{}, fmt.Errorf("%w: only one recurrence type can be specified, got %d", ErrInvalidRecurrenceInput, notNilCount)
+	}
+
+	if input.Recurrence.IntervalDays != nil && *input.Recurrence.IntervalDays <= 0 {
+		return CreateRecurrenceInput{}, fmt.Errorf("%w: interval_days can't be less than a 0", ErrInvalidInput)
+	}
+
+	if input.Recurrence.MonthDays != nil && len(*input.Recurrence.MonthDays) == 0 {
+		return CreateRecurrenceInput{}, fmt.Errorf("%w: month_days cant't be less than a 0", ErrInvalidInput)
+	}
+
+	if input.Recurrence.MonthDays != nil {
+		for _, d := range *input.Recurrence.MonthDays {
+			if d < 1 || d > 30 {
+				return CreateRecurrenceInput{}, fmt.Errorf("%w: month_days values must be between 1 and 30", ErrInvalidInput)
+			}
+		}
+	}
+
+	if input.Recurrence.SpecificDates != nil && len(*input.Recurrence.SpecificDates) == 0 {
+		return CreateRecurrenceInput{}, fmt.Errorf("%w: specific_dates must not be empty", ErrInvalidInput)
 	}
 
 	return input, nil

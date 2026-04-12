@@ -42,7 +42,7 @@ type Recurrence struct {
 type CreateRecurrenceInput struct {
 	Title       string
 	Description string
-	Recurrence  *Recurrence
+	Recurrence  Recurrence
 }
 
 type CreateInput struct {

@@ -44,6 +44,11 @@ func (h *TaskHandler) CreateRecurrencedTasks(w http.ResponseWriter, r *http.Requ
 
 	layout := "2006-01-02"
 
+	if fromStr == "" || toStr == "" {
+		writeUsecaseError(w, errors.New("params 'from' and 'to' must be specified"))
+		return
+	}
+
 	from, err := time.Parse(layout, fromStr)
 	if err != nil {
 		writeUsecaseError(w, errors.New("invalid 'from' format"))
@@ -54,11 +59,6 @@ func (h *TaskHandler) CreateRecurrencedTasks(w http.ResponseWriter, r *http.Requ
 		writeUsecaseError(w, errors.New("invalid 'to' format"))
 		return
 
-	}
-
-	if fromStr == "" || toStr == "" {
-		writeUsecaseError(w, errors.New("params 'from' and 'to' must be specified"))
-		return
 	}
 
 	err = h.usecase.CreateRecurrencedTasks(r.Context(), from, to)
@@ -84,7 +84,7 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		recurrence := taskusecase.CreateRecurrenceInput{
 			Title:       req.Title,
 			Description: req.Description,
-			Recurrence: &taskusecase.Recurrence{
+			Recurrence: taskusecase.Recurrence{
 				StartDate:     req.Recurrence.StartDate,
 				EndDate:       req.Recurrence.EndDate,
 				IntervalDays:  req.Recurrence.IntervalDays,
@@ -100,20 +100,19 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusCreated, newReccurenceDTO(created))
 	}
-	if req.Recurrence == nil {
-		task := taskusecase.CreateInput{
-			Title:       req.Title,
-			Description: req.Description,
-			DueDate:     *req.DueDate,
-			Status:      req.Status,
-		}
-		created, err := h.usecase.Create(r.Context(), task)
-		if err != nil {
-			writeUsecaseError(w, err)
-			return
-		}
-		writeJSON(w, http.StatusCreated, newTaskDTO(created))
+
+	task := taskusecase.CreateInput{
+		Title:       req.Title,
+		Description: req.Description,
+		DueDate:     *req.DueDate,
+		Status:      req.Status,
 	}
+	created, err := h.usecase.Create(r.Context(), task)
+	if err != nil {
+		writeUsecaseError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, newTaskDTO(created))
 }
 
 func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {

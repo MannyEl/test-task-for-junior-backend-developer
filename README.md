@@ -56,8 +56,10 @@ http://localhost:8080/swagger/openapi.json
 ```
 
 Основные маршруты:
+- `GET /api/v1/recurrences`
+- `POST /api/v1/tasks/generate?from={from}&to={to}`
 
-- `POST /api/v1/tasks`
+
 - `GET /api/v1/tasks`
 - `GET /api/v1/tasks/{id}`
 - `PUT /api/v1/tasks/{id}`
