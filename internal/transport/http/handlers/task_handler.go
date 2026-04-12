@@ -61,6 +61,11 @@ func (h *TaskHandler) CreateRecurrencedTasks(w http.ResponseWriter, r *http.Requ
 
 	}
 
+	if from.After(to) {
+		writeUsecaseError(w, errors.New("'from' must be <= 'to'"))
+		return
+	}
+
 	err = h.usecase.CreateRecurrencedTasks(r.Context(), from, to)
 
 	if err != nil {
@@ -99,6 +104,7 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, http.StatusCreated, newReccurenceDTO(created))
+		return
 	}
 
 	task := taskusecase.CreateInput{
