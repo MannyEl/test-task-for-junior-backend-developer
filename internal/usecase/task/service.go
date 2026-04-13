@@ -30,7 +30,6 @@ func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceIn
 	if err != nil {
 		return nil, err
 	}
-	now := s.now()
 	model := recurrencedomain.New(
 		normalized.Title,
 		normalized.Description,
@@ -42,9 +41,6 @@ func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceIn
 		normalized.Recurrence.EvenOdd,
 	)
 
-	model.CreatedAt = now
-	model.UpdatedAt = now
-
 	created, err := s.repo.CreateRecurrence(ctx, &model)
 	if err != nil {
 		return nil, err
@@ -54,6 +50,10 @@ func (s *Service) CreateRecurrence(ctx context.Context, input CreateRecurrenceIn
 }
 
 func (s *Service) CreateRecurrencedTasks(ctx context.Context, from, to time.Time) error {
+	if from.After(to) {
+		return (fmt.Errorf("'from' must be <= 'to'"))
+	}
+
 	recurrences, err := s.repo.ListRecurrence(ctx)
 	if err != nil {
 		return fmt.Errorf("list recurrences: %w", err)

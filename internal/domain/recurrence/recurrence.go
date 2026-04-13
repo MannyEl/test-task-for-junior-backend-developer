@@ -34,6 +34,7 @@ func New(
 	evenOdd *EvenOdd,
 ) Recurrence {
 	sd := time.Now().UTC()
+
 	if startDate != nil {
 		sd = startDate.UTC()
 	}
@@ -48,6 +49,8 @@ func New(
 		SpecificDates: specificDates,
 		EvenOdd:       evenOdd,
 		Active:        true,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 }
 

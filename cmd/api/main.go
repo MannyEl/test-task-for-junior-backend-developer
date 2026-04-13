@@ -16,6 +16,7 @@ import (
 	swaggerdocs "example.com/taskservice/internal/transport/http/docs"
 	httphandlers "example.com/taskservice/internal/transport/http/handlers"
 	"example.com/taskservice/internal/usecase/task"
+	"example.com/taskservice/internal/worker"
 )
 
 func main() {
@@ -46,6 +47,29 @@ func main() {
 		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+
+	// worker
+	w := worker.NewRecurrenceWorker(taskUsecase, logger, cfg.Worker)
+	ticker := time.NewTicker(cfg.Worker.Interval)
+	defer ticker.Stop()
+
+	go func() {
+		if err := w.Run(ctx); err != nil {
+			logger.Error("worker initial run failed", "error", err)
+		}
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Info("recurrence worker stopped")
+				return
+			case t := <-ticker.C:
+				logger.Info("worker tick", "time", t)
+				if err := w.Run(ctx); err != nil {
+					logger.Error("worker run failed", "error", err)
+				}
+			}
+		}
+	}()
 
 	go func() {
 		<-ctx.Done()

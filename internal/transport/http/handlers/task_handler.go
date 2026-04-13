@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -58,12 +59,11 @@ func (h *TaskHandler) CreateRecurrencedTasks(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		writeUsecaseError(w, errors.New("invalid 'to' format"))
 		return
-
 	}
+	maxRange := 30
 
-	if from.After(to) {
-		writeUsecaseError(w, errors.New("'from' must be <= 'to'"))
-		return
+	if to.Sub(from) > time.Duration(maxRange)*24*time.Hour {
+		writeUsecaseError(w, fmt.Errorf("range exceeds maximum allowed %d days", maxRange))
 	}
 
 	err = h.usecase.CreateRecurrencedTasks(r.Context(), from, to)
